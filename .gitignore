@@ -1,0 +1,16 @@
+# Node (Frontend & Backend libraries)
+node_modules/
+
+# Python (Cache and environments)
+__pycache__/
+venv/
+.env
+
+# AI Models & Heavy Data
+data/
+uploads/
+evaluation/
+*.pth
+*.pth.tar
+*.zip
+__MACOSX/
