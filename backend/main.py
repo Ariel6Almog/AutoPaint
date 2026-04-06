@@ -1,17 +1,24 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 app = FastAPI(title="AutoPaint API", description="Backend for Manga Colorization")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = ["http://localhost:5173"],
+    allow_credentials = True,
+    allow_headers = ["*"],
+    allow_methods = ["*"],
+)
 
 @app.get("/")
 def read_root():
     return {"status": "success", "message": "AutoPaint Server is Running!"}
 
-# הנתיב החדש שלנו לקבלת הסקיצה
+#path to get sketch
 @app.post("/upload-sketch/")
 async def upload_sketch(file: UploadFile = File(...)):
-    # כאן בעתיד נשמור את התמונה ונשלח אותה למודל ה-AI לצביעה
-    # כרגע, נחלץ את שם הקובץ וסוגו, ונחזיר אישור שקיבלנו אותו בהצלחה
+   
     return {
         "filename": file.filename,
         "content_type": file.content_type,
