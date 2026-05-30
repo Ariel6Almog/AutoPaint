@@ -1,60 +1,75 @@
-import { useState } from 'react'
-import axios from 'axios'
-import './App.css'
+import { useState, useEffect } from 'react';
+import Auth from './components/Auth';
+import Workspace from './components/Workspace';
+import History from './components/History';
+import './App.css';
 
 function App() {
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [serverResponse, setServerResponse] = useState("")
 
-  //Handle file selection
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-    setServerResponse("");
+  //check if token exist
+  const getInitialToken = () => {
+    const saved = localStorage.getItem("userToken");
+    if (!saved || saved === "null" || saved === "undefined" || saved === "") {
+      return null;
+    }
+    return saved;
   };
 
+  const [token, setToken] = useState(getInitialToken());
+  const [currentView, setCurrentView] = useState("workspace"); 
+  const [editImageData, setEditImageData] = useState(null); 
 
-  //handle send to paint button
-  const handleUpload = async () => {
-    if(!selectedFile){
-      alert("Please upload a sketch!");
-      return;
+  //update token state to browser
+  useEffect(() => {
+    if (token && token !== "null") {
+      localStorage.setItem("userToken", token);
+    } else {
+      localStorage.removeItem("userToken");
     }
+  }, [token]);
 
-    //package data in FormData
-    const formData = new FormData();
-    formData.append("file",selectedFile);
 
-  try {
-      const response = await axios.post("http://127.0.0.1:8000/upload-sketch/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      
-      console.log("Server Response(Success)", response.data);
-      setServerResponse(`Success!! Server Response working --> ${response.data.filename}`);
-      
-    } catch (error) {
-      console.error("Error Sending File", error);
-      setServerResponse("Error Sending File to Server");
-    }
+  //Logout
+  const handleLogout = () => {
+    localStorage.removeItem("userToken");
+    setToken(null); 
+    setCurrentView("workspace");
+    setEditImageData(null);
   };
-  
+
+ //token guard - if there is no token redirect to auth screen
+  if (!token) {
+    return <Auth setToken={setToken} />;
+  }
+
+  //UI
   return (
-    <div>
-      <h1>AutoPaint - Upload Screen</h1>
-      <div className='upload_container'>
-          <input 
-          type="file" 
-          accept="image/*"
-          onChange={handleFileChange}
-          />
-      </div>
-      <div className='button_container'>
-        <button onClick={handleUpload}>Send To Paint</button>
-      </div>
-      <br/>
-      <div className='serverResponse'>{serverResponse}</div>
+    <div className="app_container">
+      <header className="main_header">
+        <h1>AutoPaint AI</h1>
+        <div className="header_actions">
+          <button className="nav_btn" onClick={() => { setCurrentView("workspace"); setEditImageData(null); }}>New Paint</button>
+          <button className="nav_btn" onClick={() => setCurrentView("history")}>History</button>
+          <button className="logout_btn" onClick={handleLogout}>Logout</button>
+        </div>
+      </header>
+
+      {currentView === "workspace" ? (
+        <Workspace 
+          token={token} 
+          setToken={setToken} 
+          editImageData={editImageData} 
+          clearEditImage={() => setEditImageData(null)} 
+        />
+      ) : (
+        <History 
+          token={token} 
+          onEdit={(imgData) => {
+            setEditImageData(imgData); 
+            setCurrentView("workspace"); 
+          }}
+        />
+      )}
     </div>
   );
 }
