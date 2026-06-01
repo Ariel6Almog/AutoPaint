@@ -133,13 +133,13 @@ async def get_speech_mask(image: str = Form(...), token: str = Form(...)):
         t_post = time.time()
         #post process
         predicted_mask = predicted_mask.squeeze()
-        predicted_mask = (predicted_mask > 0.5).astype(np.uint8) * 255
+        predicted_mask = (predicted_mask > 0.6).astype(np.uint8) * 255
         
         red_mask = np.zeros((512, 512, 4), dtype=np.uint8)
-        red_mask[:, :, 0] = 0
-        red_mask[:, :, 1] = 0
-        red_mask[:, :, 2] = 255
-        red_mask[:, :, 3] = np.where(predicted_mask > 0, 128, 0)
+        red_mask[:, :, 0] = 0 # blue
+        red_mask[:, :, 1] = 0 # green
+        red_mask[:, :, 2] = 255 # red
+        red_mask[:, :, 3] = np.where(predicted_mask > 0, 128, 0) # alpha
         
         red_mask = cv2.resize(red_mask, (w, h), interpolation=cv2.INTER_NEAREST)
         _, mask_buffer = cv2.imencode('.png', red_mask)
@@ -151,7 +151,7 @@ async def get_speech_mask(image: str = Form(...), token: str = Form(...)):
         logging.info(f"Total Latency: {total_time * 1000:.2f} ms")
         
         return {
-            "original": img_to_base64(img_bgr), # מחזיר את התמונה המקורית בדיוק כפי שנכנסה
+            "original": img_to_base64(img_bgr),
             "mask": f"data:image/png;base64,{base64.b64encode(mask_buffer).decode('utf-8')}"
         }
         
